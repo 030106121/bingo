@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>브랜드 빙고 — 조원없조</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F8FA;
+    --white: #ffffff;
+    --primary: #111827;
+    --secondary: #6B7280;
+    --muted: #9CA3AF;
+    --pro: #7A95E8;
+    --pro-bg: #EEF3FC;
+    --pro-border: #DBEAFE;
+    --accent: #C89ACB;
+    --font: 'Noto Sans KR', sans-serif;
+  }
+  html, body {
+    width: 100%; min-height: 100vh;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--primary);
+  }
+
+  /* ── 공통 ── */
+  .screen { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 5vw; }
+  .screen.active { display: flex; }
+
+  /* ── 1. 이름 입력 ── */
+  #screen-name { gap: 3vh; text-align: center; }
+  .title-big { font-size: clamp(24px, 5vw, 40px); font-weight: 700; line-height: 1.2; }
+  .title-big em { font-style: normal; background: linear-gradient(135deg, #C89ACB, #7A95E8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .subtitle { font-size: clamp(13px, 3vw, 16px); color: var(--secondary); font-weight: 300; }
+  .name-input {
+    width: min(320px, 80vw);
+    padding: 14px 18px;
+    font-family: var(--font); font-size: 16px;
+    border: 1.5px solid #E5E7EB; border-radius: 14px;
+    background: white; color: var(--primary);
+    outline: none; text-align: center;
+    transition: border-color 0.2s;
+  }
+  .name-input:focus { border-color: var(--pro); }
+  .btn-primary {
+    padding: 14px 36px;
+    background: var(--primary); color: white;
+    font-family: var(--font); font-size: 15px; font-weight: 500;
+    border: none; border-radius: 100px; cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* ── 2. 브랜드 입력 ── */
+  #screen-input { gap: 2.5vh; max-width: 500px; width: 100%; }
+  .screen-header { text-align: center; }
+  .screen-header h2 { font-size: clamp(18px, 4vw, 26px); font-weight: 600; margin-bottom: 0.5vh; }
+  .screen-header p { font-size: clamp(12px, 2.5vw, 14px); color: var(--secondary); font-weight: 300; line-height: 1.6; }
+
+  .brand-ref { background: white; border-radius: 14px; border: 1px solid #F3F4F6; padding: 14px 16px; }
+  .brand-ref-label { font-size: 11px; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 10px; }
+  .brand-ref-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .brand-chip {
+    padding: 5px 10px; border-radius: 100px;
+    background: var(--bg); border: 1px solid #E5E7EB;
+    font-size: 12px; color: var(--secondary); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .brand-chip:hover { background: var(--pro-bg); border-color: var(--pro-border); color: var(--pro); }
+
+  .bingo-input-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .bingo-cell-input {
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    background: white; border-radius: 14px; border: 1.5px solid #E5E7EB;
+    padding: 8px; position: relative;
+    transition: border-color 0.2s;
+  }
+  .bingo-cell-input:focus-within { border-color: var(--pro); }
+  .cell-num { position: absolute; top: 6px; left: 8px; font-size: 10px; color: var(--muted); }
+  .cell-text-input {
+    width: 100%; border: none; outline: none; background: transparent;
+    font-family: var(--font); font-size: clamp(11px, 2.5vw, 14px);
+    font-weight: 500; color: var(--primary);
+    text-align: center; cursor: pointer;
+  }
+  .cell-text-input::placeholder { color: var(--muted); font-weight: 300; font-size: 11px; }
+  .cell-filled { border-color: var(--pro-border); background: var(--pro-bg); }
+  .cell-filled .cell-text-input { color: #1E40AF; }
+
+  .input-progress { font-size: 13px; color: var(--muted); text-align: center; }
+  .input-progress span { color: var(--pro); font-weight: 600; }
+
+  /* ── 3. 빙고 게임 ── */
+  #screen-bingo { gap: 2.5vh; max-width: 420px; width: 100%; }
+  .bingo-header { text-align: center; }
+  .bingo-header h2 { font-size: clamp(16px, 3.5vw, 22px); font-weight: 600; }
+  .bingo-header p { font-size: 13px; color: var(--secondary); margin-top: 4px; font-weight: 300; }
+
+  .bingo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .bingo-cell {
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    background: white; border-radius: 14px; border: 1.5px solid #E5E7EB;
+    font-size: clamp(11px, 2.5vw, 14px); font-weight: 500;
+    text-align: center; padding: 8px; cursor: pointer;
+    transition: all 0.2s; user-select: none; line-height: 1.3;
+    color: var(--primary);
+  }
+  .bingo-cell:hover { border-color: #D1D5DB; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .bingo-cell.checked {
+    background: var(--primary); border-color: var(--primary); color: white;
+    transform: scale(0.97);
+  }
+  .bingo-cell.bingo-line {
+    background: linear-gradient(135deg, #C89ACB, #7A95E8);
+    border-color: transparent; color: white;
+  }
+
+  /* 빙고 카운트 */
+  .bingo-count { text-align: center; }
+  .bingo-count-num { font-size: clamp(32px, 8vw, 52px); font-weight: 700; color: var(--primary); line-height: 1; }
+  .bingo-count-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* 빙고 완성 배너 */
+  .bingo-banner {
+    display: none; text-align: center;
+    padding: 16px 24px; border-radius: 16px;
+    background: linear-gradient(135deg, #C89ACB, #7A95E8);
+    color: white; font-size: clamp(16px, 4vw, 22px); font-weight: 700;
+    animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .bingo-banner.show { display: block; }
+  @keyframes pop { from{transform:scale(0.7);opacity:0} to{transform:scale(1);opacity:1} }
+
+  .btn-secondary {
+    padding: 10px 24px;
+    background: transparent; color: var(--secondary);
+    font-family: var(--font); font-size: 13px;
+    border: 1px solid #E5E7EB; border-radius: 100px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { border-color: #D1D5DB; color: var(--primary); }
+
+  /* 브랜드 칩 클릭 → 셀에 자동입력 */
+  .selected-chip { background: var(--pro-bg) !important; border-color: var(--pro-border) !important; color: var(--pro) !important; }
+</style>
+</head>
+<body>
+
+<!-- 화면 1: 이름 입력 -->
+<div class="screen active" id="screen-name">
+  <div class="title-big">브랜드 <em>빙고</em></div>
+  <div class="subtitle">이름을 입력하면 나만의 빙고판이 생성됩니다</div>
+  <input class="name-input" id="nameInput" type="text" placeholder="이름을 입력하세요" maxlength="10">
+  <button class="btn-primary" id="nameBtn" onclick="submitName()" disabled>시작하기</button>
+</div>
+
+<!-- 화면 2: 브랜드 입력 -->
+<div class="screen" id="screen-input">
+  <div class="screen-header">
+    <h2 id="inputTitle">빙고판을 채워주세요</h2>
+    <p>9칸에 원하는 브랜드를 입력하거나<br>아래 목록에서 눌러서 선택하세요</p>
+  </div>
+
+  <div class="brand-ref">
+    <div class="brand-ref-label">브랜드 목록 (누르면 선택)</div>
+    <div class="brand-ref-grid" id="brandRef"></div>
+  </div>
+
+  <div class="bingo-input-grid" id="inputGrid"></div>
+
+  <div class="input-progress">
+    <span id="filledCount">0</span> / 9 칸 채움
+  </div>
+
+  <button class="btn-primary" id="startBtn" onclick="startBingo()" disabled>빙고 시작!</button>
+</div>
+
+<!-- 화면 3: 빙고 게임 -->
+<div class="screen" id="screen-bingo">
+  <div class="bingo-header">
+    <h2 id="bingoTitle">내 빙고판</h2>
+    <p>브랜드가 불리면 해당 칸을 눌러주세요</p>
+  </div>
+
+  <div class="bingo-banner" id="bingoBanner">🎉 빙고!</div>
+
+  <div class="bingo-count">
+    <div class="bingo-count-num" id="bingoCountNum">0</div>
+    <div class="bingo-count-label">빙고</div>
+  </div>
+
+  <div class="bingo-grid" id="bingoGrid"></div>
+
+  <button class="btn-secondary" onclick="resetGame()">처음부터 다시</button>
+</div>
+
+<script>
+const BRANDS = [
+  'Nike','Apple','Starbucks','McDonald\'s','L\'Oréal','Chanel',
+  'Cartier','Lacoste','Uniqlo','Sony','Nintendo','Muji',
+  '샤오미','SHEIN','TikTok','Alibaba','Tata','Infosys',
+  'Myntra','Dabur','Highlands Coffee','Vinfast','Vietjet Air','Phở 24'
+];
+
+const LINES = [
+  [0,1,2],[3,4,5],[6,7,8],   // 가로
+  [0,3,6],[1,4,7],[2,5,8],   // 세로
+  [0,4,8],[2,4,6]            // 대각선
+];
+
+let userName = '';
+let cells = Array(9).fill('');
+let checked = Array(9).fill(false);
+let focusedCell = null;
+
+// ── 이름 입력 ──
+const nameInput = document.getElementById('nameInput');
+const nameBtn = document.getElementById('nameBtn');
+nameInput.addEventListener('input', () => {
+  nameBtn.disabled = nameInput.value.trim().length === 0;
+});
+nameInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !nameBtn.disabled) submitName();
+});
+
+function submitName() {
+  userName = nameInput.value.trim();
+  if (!userName) return;
+
+  // localStorage에서 이전 데이터 복원
+  const saved = localStorage.getItem('bingo_' + userName);
+  if (saved) {
+    const data = JSON.parse(saved);
+    cells = data.cells || Array(9).fill('');
+    checked = data.checked || Array(9).fill(false);
+
+    if (cells.some(c => c)) {
+      // 빙고판 바로 시작
+      showScreen('screen-bingo');
+      renderBingo();
+      return;
+    }
+  }
+
+  showScreen('screen-input');
+  document.getElementById('inputTitle').textContent = userName + '님의 빙고판';
+  renderInputGrid();
+  renderBrandRef();
+}
+
+// ── 브랜드 참고 목록 ──
+function renderBrandRef() {
+  const container = document.getElementById('brandRef');
+  container.innerHTML = '';
+  BRANDS.forEach(b => {
+    const chip = document.createElement('div');
+    chip.className = 'brand-chip';
+    chip.textContent = b;
+    chip.onclick = () => selectBrandFromRef(b, chip);
+    container.appendChild(chip);
+  });
+}
+
+function selectBrandFromRef(brand, chip) {
+  // 이미 입력된 브랜드면 스킵
+  if (cells.includes(brand)) return;
+
+  // 포커스된 셀 또는 첫 빈 칸에 입력
+  let target = focusedCell;
+  if (target === null || cells[target] !== '') {
+    target = cells.findIndex(c => c === '');
+  }
+  if (target === -1) return;
+
+  cells[target] = brand;
+  renderInputGrid();
+  updateProgress();
+
+  // 칩 강조
+  document.querySelectorAll('.brand-chip').forEach(c => c.classList.remove('selected-chip'));
+  chip.classList.add('selected-chip');
+  setTimeout(() => chip.classList.remove('selected-chip'), 600);
+}
+
+// ── 입력 그리드 ──
+function renderInputGrid() {
+  const grid = document.getElementById('inputGrid');
+  grid.innerHTML = '';
+  cells.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'bingo-cell-input' + (val ? ' cell-filled' : '');
+
+    const num = document.createElement('div');
+    num.className = 'cell-num';
+    num.textContent = i + 1;
+
+    const inp = document.createElement('input');
+    inp.className = 'cell-text-input';
+    inp.type = 'text';
+    inp.value = val;
+    inp.placeholder = '브랜드 입력';
+    inp.maxLength = 20;
+    inp.addEventListener('focus', () => { focusedCell = i; });
+    inp.addEventListener('input', () => {
+      cells[i] = inp.value;
+      cell.className = 'bingo-cell-input' + (inp.value ? ' cell-filled' : '');
+      updateProgress();
+    });
+
+    cell.appendChild(num);
+    cell.appendChild(inp);
+    grid.appendChild(cell);
+  });
+}
+
+function updateProgress() {
+  const filled = cells.filter(c => c.trim()).length;
+  document.getElementById('filledCount').textContent = filled;
+  document.getElementById('startBtn').disabled = filled < 9;
+}
+
+// ── 빙고 시작 ──
+function startBingo() {
+  cells = cells.map(c => c.trim());
+  if (cells.some(c => !c)) return;
+  checked = Array(9).fill(false);
+  saveData();
+  showScreen('screen-bingo');
+  renderBingo();
+}
+
+// ── 빙고 게임 ──
+function renderBingo() {
+  document.getElementById('bingoTitle').textContent = userName + '님의 빙고판';
+  const grid = document.getElementById('bingoGrid');
+  grid.innerHTML = '';
+
+  const completedLines = getCompletedLines();
+  const lineSet = new Set(completedLines.flat());
+
+  cells.forEach((brand, i) => {
+    const cell = document.createElement('div');
+    const inLine = lineSet.has(i);
+    cell.className = 'bingo-cell' + (inLine ? ' bingo-line' : checked[i] ? ' checked' : '');
+    cell.textContent = brand;
+    cell.onclick = () => toggleCell(i);
+    grid.appendChild(cell);
+  });
+
+  updateBingoCount(completedLines.length);
+}
+
+function toggleCell(i) {
+  checked[i] = !checked[i];
+  saveData();
+  renderBingo();
+  checkBingo();
+}
+
+function getCompletedLines() {
+  return LINES.filter(line => line.every(i => checked[i]));
+}
+
+function checkBingo() {
+  const lines = getCompletedLines();
+  const banner = document.getElementById('bingoBanner');
+  if (lines.length > 0) {
+    banner.textContent = '🎉 빙고! (' + lines.length + '줄)';
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+function updateBingoCount(count) {
+  document.getElementById('bingoCountNum').textContent = count;
+}
+
+// ── 저장/복원 ──
+function saveData() {
+  localStorage.setItem('bingo_' + userName, JSON.stringify({ cells, checked }));
+}
+
+function resetGame() {
+  if (!confirm('처음부터 다시 시작할까요? 입력한 내용이 초기화됩니다.')) return;
+  localStorage.removeItem('bingo_' + userName);
+  cells = Array(9).fill('');
+  checked = Array(9).fill(false);
+  showScreen('screen-name');
+  nameInput.value = '';
+  nameBtn.disabled = true;
+}
+
+// ── 화면 전환 ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>
